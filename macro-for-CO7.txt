@@ -1,0 +1,12 @@
+Sub MacroForSO7()
+    Dim doc As Document
+    Dim para As Paragraph
+    
+    Set doc = ActiveDocument
+    
+    Set para = doc.Paragraphs(1)
+
+End Sub
+Function FindAndUpdate(idx As Integer, entry As String) As Integer
+    FindAndUpdate = idx + 1
+End Function
