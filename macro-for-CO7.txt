@@ -1,12 +1,174 @@
 Sub MacroForSO7()
     Dim doc As Document
-    Dim para As Paragraph
     
     Set doc = ActiveDocument
     
-    Set para = doc.Paragraphs(1)
+    SetDefaultStyle doc
+    
+    Dim cRange As range ' current range
+    
+    Set cRange = GetRangeByIdx(doc, 1)              '1
+    SetStyleRight10 cRange
+    cRange.InsertParagraphAfter                     '2
+    
+    SetStyleBoldCenter14 GetRangeByIdx(doc, 3)      '3
+    SetStyleBoldCenter14 GetRangeByIdx(doc, 4)      '4
+    
+    Set cRange = GetRangeByIdx(doc, 5)              '5
+    SetStyleUnderlineRight14 cRange
+    cRange.InsertParagraphAfter                     '6
+
+    SetStyleWithPrefix "Наименование объекта автоматизации", GetRangeByIdx(doc, 7)  '7
+    SetStyleWithPrefix "Адрес объекта автоматизации", GetRangeByIdx(doc, 8)         '8
+    
+    Set cRange = GetRangeByIdx(doc, 9)
+    SetStyleWithPrefix "Код объекта автоматизации", cRange                          '9
+    cRange.InsertParagraphAfter
 
 End Sub
-Function FindAndUpdate(idx As Integer, entry As String) As Integer
-    FindAndUpdate = idx + 1
+
+'   +-----------------------------------------------------------------------+
+'   |   SetStyleRight10                                                     |
+'   +-----------------------------------------------------------------------+
+'   |   Задаёт стиль абзацу                                                 |
+'   +-----------------------------------------------------------------------+
+Sub SetStyleRight10(ByRef r As range)
+    With r.Font
+        .Size = 10
+    End With
+    With r.ParagraphFormat
+        .Alignment = wdAlignParagraphRight
+    End With
+End Sub
+
+'   +-----------------------------------------------------------------------+
+'   |   SetStyleBoldCenter14                                                |
+'   +-----------------------------------------------------------------------+
+'   |   Задаёт стиль абзацу                                                 |
+'   +-----------------------------------------------------------------------+
+Sub SetStyleBoldCenter14(ByRef r As range)
+    With r.Font
+        .Size = 14
+        .Bold = True
+    End With
+    With r.ParagraphFormat
+        .Alignment = wdAlignParagraphCenter
+    End With
+End Sub
+
+'   +-----------------------------------------------------------------------+
+'   |   SetStyleUnderlineRight14                                            |
+'   +-----------------------------------------------------------------------+
+'   |   Задаёт стиль абзацу                                                 |
+'   +-----------------------------------------------------------------------+
+Sub SetStyleUnderlineRight14(ByRef r As range)
+    r.Text = Trim(r.Text)
+    With r.Font
+        .Size = 14
+        .Underline = wdUnderlineSingle
+    End With
+    With r.ParagraphFormat
+        .Alignment = wdAlignParagraphRight
+    End With
+End Sub
+
+'   +-----------------------------------------------------------------------+
+'   |   SetStyleWithPrefix                                                  |
+'   +-----------------------------------------------------------------------+
+'   |   Функция проверяет, существует ли префикс в строке                   |
+'   |   Если префикса нет, то добавляет его                                 |
+'   |   Задаёт стиль отдельно префиксу и остальному тексту                  |
+'   +-----------------------------------------------------------------------+
+Sub SetStyleWithPrefix(pref As String, ByRef r As range)
+    
+    If IsPrefixExists(pref, r.Text) = False Then
+        r.Text = pref & ": " & r.Text
+    End If
+    
+    Dim tempRange As range
+    Set tempRange = r.Duplicate
+    tempRange.Start = tempRange.Start
+    tempRange.End = tempRange.Start + Len(pref) + 1 ' +1 для того, чтоб двоеточие тоже закрасить
+    
+    With r.Font
+        .Bold = True
+    End With
+    With tempRange.Font
+        .Italic = True
+        .Bold = False
+    End With
+    
+    With r.Font
+        .Size = 12
+        .Underline = wdUnderlineSingle
+    End With
+    With r.ParagraphFormat
+        .Alignment = wdAlignParagraphLeft
+        .LineSpacing = 18
+    End With
+End Sub
+
+'   +-----------------------------------------------------------------------+
+'   |   GetRangeByIdx                                                       |
+'   +-----------------------------------------------------------------------+
+'   |   inline-функция. Принимает документ и возвращает параграф по индексу |
+'   +-----------------------------------------------------------------------+
+Function GetRangeByIdx(ByRef doc As Document, ByRef idx As Integer) As range
+    Set GetRangeByIdx = doc.Paragraphs(idx).range
+End Function
+
+'   +-----------------------------------------------------------------------+
+'   |   SetDefaultStyle                                                     |
+'   +-----------------------------------------------------------------------+
+'   |   Задаёт стиль всему документу по умолчанию и удаляет пустые строки   |
+'   +-----------------------------------------------------------------------+
+Sub SetDefaultStyle(ByRef doc As Document)
+    With doc.Content
+        .Font.Size = 12
+        .Font.Bold = False
+    End With
+    
+    Dim par As Paragraph
+    Dim str As String
+    
+    For Each par In doc.Paragraphs
+        str = par.range.Text
+        If IsEmptyString(str) = True Then
+            par.range.Delete
+        End If
+    Next par
+    
+End Sub
+
+'   +-----------------------------------------------------------------------+
+'   |   IsEmptyString                                                       |
+'   +-----------------------------------------------------------------------+
+'   |   Функция проверяет, является ли строка пустой                        |
+'   +-----------------------------------------------------------------------+
+Function IsEmptyString(ByRef str As String) As Boolean
+    str = Trim(str)
+    Dim ln As Integer
+    ln = Len(str)
+    
+    If str = vbCr Then
+        IsEmptyString = True
+    ElseIf Len(str) <= 0 Then
+        IsEmptyString = True
+    Else
+        IsEmptyString = False
+    End If
+End Function
+
+'   TODO: Переименовать как-нибудь по другому
+'   +-----------------------------------------------------------------------+
+'   |   IsPrefixExists                                                      |
+'   +-----------------------------------------------------------------------+
+'   |   Функция проверяет, существует ли подстрока в строке                 |
+'   +-----------------------------------------------------------------------+
+Function IsPrefixExists(ByRef pref As String, ByRef str As String) As Boolean
+    If InStr(str, pref) > 0 Then
+        IsPrefixExists = True
+    Else
+        IsPrefixExists = False
+    End If
 End Function
